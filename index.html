@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Speech Pro</title>
+    <link rel="icon" type="image/x-icon" href="image/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="stars"></div>
+    <div class="custom-container p-6 sm:p-8 w-full max-w-2xl relative z-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-white tracking-wide animate-fade-in">Text to Speech Pro</h1>
+        
+        <textarea id="textInput" class="w-full p-4 border-2 rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-500 bg-gray-800 text-gray-200 placeholder-gray-500 resize-none transition-all duration-300 shadow-lg" placeholder="Enter text to convert to speech..." maxlength="1000"></textarea>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <div>
+                <label for="voiceSelect" class="block text-sm font-medium text-gray-300 mb-2">Voice</label>
+                <select id="voiceSelect" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200 cursor-pointer transition-colors duration-200"></select>
+            </div>
+            <div>
+                <label for="languageFilter" class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                <select id="languageFilter" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200 cursor-pointer transition-colors duration-200"></select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div>
+                <label for="rate" class="block text-sm font-medium text-gray-300 mb-2">Speed</label>
+                <select id="rate" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200 cursor-pointer transition-colors duration-200">
+                    <option value="0.5">Slow</option>
+                    <option value="1" selected>Normal</option>
+                    <option value="1.5">Fast</option>
+                    <option value="2">Very Fast</option>
+                </select>
+            </div>
+            <div>
+                <label for="pitch" class="block text-sm font-medium text-gray-300 mb-2">Pitch</label>
+                <select id="pitch" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200 cursor-pointer transition-colors duration-200">
+                    <option value="0.5">Low</option>
+                    <option value="1" selected>Normal</option>
+                    <option value="1.5">High</option>
+                    <option value="2">Very High</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-8">
+            <button id="playBtn" class="btn-primary bg-purple-600 text-white px-8 py-3 rounded-xl hover:bg-purple-700 transition-transform transform hover:scale-105 shadow-lg">Play Audio 🎧</button>
+            <button id="downloadBtn" class="btn-secondary bg-gray-600 text-white px-8 py-3 rounded-xl hover:bg-gray-700 transition-transform transform hover:scale-105 shadow-lg">Download Audio 💾</button>
+        </div>
+        
+        <p id="status" class="mt-6 text-sm text-gray-400 text-center hidden"></p>
+        
+        <div class="footer mt-10">
+            <p class="footer-text text-center text-gray-500 text-sm">Created By <span class="text-purple-400 font-medium">Amit Pandey</span></p>
+        </div>
+    </div>
+
+    <script>
+        // app.js
+
+const synth = window.speechSynthesis;
+const textInput = document.getElementById('textInput');
+const voiceSelect = document.getElementById('voiceSelect');
+const languageFilter = document.getElementById('languageFilter');
+const rate = document.getElementById('rate');
+const pitch = document.getElementById('pitch');
+const status = document.getElementById('status');
+const playBtn = document.getElementById('playBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let voices = [];
+
+// A more comprehensive language map for display purposes
+const languageMap = {
+    'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
+    'pt': 'Portuguese', 'ru': 'Russian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean',
+    'ar': 'Arabic', 'hi': 'Hindi', 'bn': 'Bengali', 'th': 'Thai', 'he': 'Hebrew',
+    'pl': 'Polish', 'nl': 'Dutch', 'sv': 'Swedish', 'tr': 'Turkish', 'vi': 'Vietnamese',
+    'da': 'Danish', 'el': 'Greek', 'fi': 'Finnish', 'hu': 'Hungarian', 'id': 'Indonesian',
+    'ms': 'Malay', 'no': 'Norwegian', 'sk': 'Slovak', 'uk': 'Ukrainian'
+};
+
+// Function to create the star background
+function createStars() {
+    const starsContainer = document.querySelector('.stars');
+    for (let i = 0; i < 150; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 2 + 1; // 1 to 3px
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.animationDelay = `${Math.random() * 5}s`;
+        starsContainer.appendChild(star);
+    }
+}
+
+// Function to populate the voice and language dropdowns
+function populateVoices() {
+    voices = synth.getVoices();
+    voiceSelect.innerHTML = '';
+    const languages = new Set();
+    
+    voices.forEach(voice => {
+        const langCode = voice.lang.split('-')[0];
+        languages.add(langCode);
+    });
+
+    // Populate language filter dropdown
+    languageFilter.innerHTML = '<option value="all">All Languages</option>';
+    Array.from(languages).sort().forEach(lang => {
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = languageMap[lang] || lang.toUpperCase();
+        languageFilter.appendChild(option);
+    });
+    
+    // Filter and populate the voice select dropdown initially
+    filterVoices();
+}
+
+// Function to filter voices based on the selected language
+function filterVoices() {
+    const selectedLang = languageFilter.value;
+    voiceSelect.innerHTML = '';
+    const filteredVoices = voices.filter(voice => selectedLang === 'all' || voice.lang.startsWith(selectedLang));
+    
+    if (filteredVoices.length === 0) {
+        const noVoiceOption = document.createElement('option');
+        noVoiceOption.textContent = 'No voices found for this language.';
+        noVoiceOption.disabled = true;
+        voiceSelect.appendChild(noVoiceOption);
+    } else {
+        filteredVoices.forEach((voice, index) => {
+            const option = document.createElement('option');
+            option.value = voices.indexOf(voice); // Use the original index
+            option.textContent = `${voice.name} (${voice.lang})`;
+            voiceSelect.appendChild(option);
+        });
+    }
+}
+
+// Main function to handle speaking the text
+function speak() {
+    if (synth.speaking) {
+        synth.cancel();
+    }
+    
+    if (!textInput.value.trim()) {
+        showStatus('Please enter some text to speak.', 'error');
+        return;
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(textInput.value);
+    const selectedVoice = voices[voiceSelect.value];
+    
+    if (!selectedVoice) {
+        showStatus('No voice selected or available.', 'error');
+        return;
+    }
+
+    utterance.voice = selectedVoice;
+    utterance.rate = parseFloat(rate.value);
+    utterance.pitch = parseFloat(pitch.value);
+
+    utterance.onstart = () => {
+        showStatus('Playing audio...', 'info');
+    };
+    
+    utterance.onend = () => {
+        showStatus('Playback finished.', 'success');
+        setTimeout(() => hideStatus(), 2000);
+    };
+
+    utterance.onerror = (event) => {
+        console.error('SpeechSynthesisUtterance.onerror', event);
+        showStatus('An error occurred during speech synthesis.', 'error');
+    };
+
+    synth.speak(utterance);
+}
+
+// Function to show a status message to the user
+function showStatus(message, type = 'info') {
+    status.textContent = message;
+    status.classList.remove('hidden');
+    
+    // Optional: Add color classes based on message type
+    status.classList.remove('text-gray-400', 'text-red-400', 'text-green-400');
+    if (type === 'error') {
+        status.classList.add('text-red-400');
+    } else if (type === 'success') {
+        status.classList.add('text-green-400');
+    } else {
+        status.classList.add('text-gray-400');
+    }
+}
+
+// Function to hide the status message
+function hideStatus() {
+    status.classList.add('hidden');
+}
+
+// Dummy download function to explain the limitation
+function downloadSpeech() {
+    showStatus('⚠️ Note: Direct MP3 download is not supported by the browser\'s API. This feature requires a server-side service (e.g., Google Cloud TTS or Amazon Polly).', 'error');
+}
+
+// Event listeners
+if (synth) {
+    // Populate voices when they change (e.g., after the page loads)
+    synth.onvoiceschanged = populateVoices;
+
+    // Call populateVoices immediately if voices are already loaded
+    if (synth.getVoices().length > 0) {
+        populateVoices();
+    }
+} else {
+    showStatus('Your browser does not support the Web Speech API.', 'error');
+    playBtn.disabled = true;
+    downloadBtn.disabled = true;
+}
+
+languageFilter.addEventListener('change', filterVoices);
+playBtn.addEventListener('click', speak);
+downloadBtn.addEventListener('click', downloadSpeech);
+
+// Initial setup
+createStars();
+    </script>
+</body>
+</html>

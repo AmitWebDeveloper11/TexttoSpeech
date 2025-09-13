@@ -1,0 +1,135 @@
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e1b4b 100%);
+            overflow-x: hidden;
+            position: relative;
+        }
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .star {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: twinkle 5s infinite alternate;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .custom-container {
+            background: linear-gradient(145deg, rgba(5, 13, 100, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3), inset 0 0 15px rgba(99, 102, 241, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .custom-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+        .custom-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        .custom-container:hover::before {
+            left: 100%;
+        }
+        .btn {
+            transition: all 0.3s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.5);
+        }
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.4s ease;
+            border-radius: 50%;
+        }
+        .btn:hover::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        textarea, select {
+            transition: all 0.3s ease;
+            background: rgba(6, 20, 44, 0.745);
+        }
+        textarea:focus, select:focus {
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        }
+        .footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            text-align: center;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.3));
+            border-top: 1px solid rgba(99, 102, 241, 0.5);
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .footer-text {
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 20px rgba(59, 130, 246, 0.6);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 0 0 20px rgba(59, 130, 246, 0.6); }
+            100% { text-shadow: 0 0 15px rgba(99, 102, 241, 1), 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 10%, transparent 40%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 640px) {
+            textarea {
+                height: 120px;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+            }
+            .footer-text {
+                font-size: 0.9rem;
+            }
+        }

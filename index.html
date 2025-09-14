@@ -9,12 +9,12 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-900">
     <div class="stars"></div>
-    <div class="custom-container p-6 sm:p-8 w-full max-w-2xl relative z-10">
+    <div class="custom-container p-6 sm:p-8 w-full max-w-2xl relative z-10 bg-gray-800 rounded-lg shadow-xl">
         <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-white tracking-wide animate-fade-in">Text to Speech Pro</h1>
         
-        <textarea id="textInput" class="w-full p-4 border-2 rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-500 bg-gray-800 text-gray-200 placeholder-gray-500 resize-none transition-all duration-300 shadow-lg" placeholder="Enter text to convert to speech..." maxlength="1000"></textarea>
+        <textarea id="textInput" class="w-full p-4 border-2 rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-500 bg-gray-700 text-gray-200 placeholder-gray-500 resize-none transition-all duration-300 shadow-lg" placeholder="Enter text to convert to speech..." maxlength="1000"></textarea>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
             <div>
@@ -61,178 +61,208 @@
     </div>
 
     <script>
-        // app.js
+        const synth = window.speechSynthesis;
+        const textInput = document.getElementById('textInput');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const languageFilter = document.getElementById('languageFilter');
+        const rate = document.getElementById('rate');
+        const pitch = document.getElementById('pitch');
+        const status = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
 
-const synth = window.speechSynthesis;
-const textInput = document.getElementById('textInput');
-const voiceSelect = document.getElementById('voiceSelect');
-const languageFilter = document.getElementById('languageFilter');
-const rate = document.getElementById('rate');
-const pitch = document.getElementById('pitch');
-const status = document.getElementById('status');
-const playBtn = document.getElementById('playBtn');
-const downloadBtn = document.getElementById('downloadBtn');
+        let voices = [];
 
-let voices = [];
+        // Language map for display
+        const languageMap = {
+            'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
+            'pt': 'Portuguese', 'ru': 'Russian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean',
+            'ar': 'Arabic', 'hi': 'Hindi', 'bn': 'Bengali', 'th': 'Thai', 'he': 'Hebrew',
+            'pl': 'Polish', 'nl': 'Dutch', 'sv': 'Swedish', 'tr': 'Turkish', 'vi': 'Vietnamese',
+            'da': 'Danish', 'el': 'Greek', 'fi': 'Finnish', 'hu': 'Hungarian', 'id': 'Indonesian',
+            'ms': 'Malay', 'no': 'Norwegian', 'sk': 'Slovak', 'uk': 'Ukrainian'
+        };
 
-// A more comprehensive language map for display purposes
-const languageMap = {
-    'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German', 'it': 'Italian',
-    'pt': 'Portuguese', 'ru': 'Russian', 'zh': 'Chinese', 'ja': 'Japanese', 'ko': 'Korean',
-    'ar': 'Arabic', 'hi': 'Hindi', 'bn': 'Bengali', 'th': 'Thai', 'he': 'Hebrew',
-    'pl': 'Polish', 'nl': 'Dutch', 'sv': 'Swedish', 'tr': 'Turkish', 'vi': 'Vietnamese',
-    'da': 'Danish', 'el': 'Greek', 'fi': 'Finnish', 'hu': 'Hungarian', 'id': 'Indonesian',
-    'ms': 'Malay', 'no': 'Norwegian', 'sk': 'Slovak', 'uk': 'Ukrainian'
-};
+        // Function to create the star background
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                starsContainer.appendChild(star);
+            }
+        }
 
-// Function to create the star background
-function createStars() {
-    const starsContainer = document.querySelector('.stars');
-    for (let i = 0; i < 150; i++) {
-        const star = document.createElement('div');
-        star.classList.add('star');
-        const size = Math.random() * 2 + 1; // 1 to 3px
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.animationDelay = `${Math.random() * 5}s`;
-        starsContainer.appendChild(star);
-    }
-}
+        // Function to populate voices and language dropdowns
+        function populateVoices() {
+            voices = synth.getVoices();
+            console.log('Available voices:', voices); // Debug: Log available voices
+            if (voices.length === 0) {
+                showStatus('No voices available. Retrying...', 'error');
+                setTimeout(populateVoices, 1000); // Retry after 1 second
+                return;
+            }
 
-// Function to populate the voice and language dropdowns
-function populateVoices() {
-    voices = synth.getVoices();
-    voiceSelect.innerHTML = '';
-    const languages = new Set();
-    
-    voices.forEach(voice => {
-        const langCode = voice.lang.split('-')[0];
-        languages.add(langCode);
-    });
+            voiceSelect.innerHTML = '';
+            const languages = new Set();
 
-    // Populate language filter dropdown
-    languageFilter.innerHTML = '<option value="all">All Languages</option>';
-    Array.from(languages).sort().forEach(lang => {
-        const option = document.createElement('option');
-        option.value = lang;
-        option.textContent = languageMap[lang] || lang.toUpperCase();
-        languageFilter.appendChild(option);
-    });
-    
-    // Filter and populate the voice select dropdown initially
-    filterVoices();
-}
+            voices.forEach(voice => {
+                const langCode = voice.lang.split('-')[0];
+                languages.add(langCode);
+            });
 
-// Function to filter voices based on the selected language
-function filterVoices() {
-    const selectedLang = languageFilter.value;
-    voiceSelect.innerHTML = '';
-    const filteredVoices = voices.filter(voice => selectedLang === 'all' || voice.lang.startsWith(selectedLang));
-    
-    if (filteredVoices.length === 0) {
-        const noVoiceOption = document.createElement('option');
-        noVoiceOption.textContent = 'No voices found for this language.';
-        noVoiceOption.disabled = true;
-        voiceSelect.appendChild(noVoiceOption);
-    } else {
-        filteredVoices.forEach((voice, index) => {
-            const option = document.createElement('option');
-            option.value = voices.indexOf(voice); // Use the original index
-            option.textContent = `${voice.name} (${voice.lang})`;
-            voiceSelect.appendChild(option);
+            // Populate language filter dropdown
+            languageFilter.innerHTML = '<option value="all">All Languages</option>';
+            Array.from(languages).sort().forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = languageMap[lang] || lang.toUpperCase();
+                languageFilter.appendChild(option);
+            });
+
+            // Filter and populate the voice select dropdown
+            filterVoices();
+        }
+
+        // Function to filter voices based on selected language
+        function filterVoices() {
+            const selectedLang = languageFilter.value;
+            voiceSelect.innerHTML = '';
+            const filteredVoices = voices.filter(voice => selectedLang === 'all' || voice.lang.startsWith(selectedLang));
+
+            if (filteredVoices.length === 0) {
+                const noVoiceOption = document.createElement('option');
+                noVoiceOption.textContent = 'No voices found for this language.';
+                noVoiceOption.disabled = true;
+                voiceSelect.appendChild(noVoiceOption);
+                showStatus('No voices available for the selected language.', 'error');
+            } else {
+                filteredVoices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = voices.indexOf(voice);
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    voiceSelect.appendChild(option);
+                });
+                showStatus(`Found ${filteredVoices.length} voice(s) for ${selectedLang === 'all' ? 'all languages' : languageMap[selectedLang] || selectedLang}.`, 'success');
+            }
+        }
+
+        // Function to speak the text
+        function speak() {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+
+            if (!textInput.value.trim()) {
+                showStatus('Please enter some text to speak.', 'error');
+                return;
+            }
+
+            // Ensure voices are loaded before speaking
+            if (voices.length === 0) {
+                showStatus('Voices not loaded yet. Loading...', 'info');
+                populateVoices();
+                setTimeout(speak, 500); // Retry speaking after voices load
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textInput.value);
+            const selectedVoice = voices[voiceSelect.value];
+
+            if (!selectedVoice) {
+                showStatus('No voice selected or available.', 'error');
+                return;
+            }
+
+            utterance.voice = selectedVoice;
+            utterance.rate = parseFloat(rate.value);
+            utterance.pitch = parseFloat(pitch.value);
+
+            utterance.onstart = () => {
+                showStatus('Playing audio...', 'info');
+            };
+
+            utterance.onend = () => {
+                showStatus('Playback finished.', 'success');
+                setTimeout(hideStatus, 2000);
+            };
+
+            utterance.onerror = (event) => {
+                console.error('SpeechSynthesisUtterance.onerror', event);
+                showStatus('An error occurred during speech synthesis.', 'error');
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Function to show status messages
+        function showStatus(message, type = 'info') {
+            status.textContent = message;
+            status.classList.remove('hidden', 'text-gray-400', 'text-red-400', 'text-green-400');
+            if (type === 'error') {
+                status.classList.add('text-red-400');
+            } else if (type === 'success') {
+                status.classList.add('text-green-400');
+            } else {
+                status.classList.add('text-gray-400');
+            }
+        }
+
+        // Function to hide status messages
+        function hideStatus() {
+            status.classList.add('hidden');
+        }
+
+        // Dummy download function
+        function downloadSpeech() {
+            showStatus('⚠️ Note: Direct MP3 download is not supported by the browser\'s API. Use a server-side service (e.g., Google Cloud TTS).', 'error');
+        }
+
+        // Event listeners
+        if (synth) {
+            // Handle voices changed event
+            synth.onvoiceschanged = () => {
+                console.log('Voices changed event fired'); // Debug
+                populateVoices();
+            };
+
+            // Try to load voices immediately
+            populateVoices();
+
+            // Fallback: Retry loading voices after a delay
+            setTimeout(() => {
+                if (voices.length === 0) {
+                    console.log('Retrying to load voices...');
+                    populateVoices();
+                }
+            }, 1000);
+        } else {
+            showStatus('Your browser does not support the Web Speech API.', 'error');
+            playBtn.disabled = true;
+            downloadBtn.disabled = true;
+        }
+
+        languageFilter.addEventListener('change', filterVoices);
+        playBtn.addEventListener('click', () => {
+            // Ensure voices are loaded on mobile before playing
+            if (voices.length === 0) {
+                showStatus('Loading voices, please wait...', 'info');
+                populateVoices();
+                setTimeout(speak, 500);
+            } else {
+                speak();
+            }
         });
-    }
-}
+        downloadBtn.addEventListener('click', downloadSpeech);
 
-// Main function to handle speaking the text
-function speak() {
-    if (synth.speaking) {
-        synth.cancel();
-    }
-    
-    if (!textInput.value.trim()) {
-        showStatus('Please enter some text to speak.', 'error');
-        return;
-    }
-    
-    const utterance = new SpeechSynthesisUtterance(textInput.value);
-    const selectedVoice = voices[voiceSelect.value];
-    
-    if (!selectedVoice) {
-        showStatus('No voice selected or available.', 'error');
-        return;
-    }
-
-    utterance.voice = selectedVoice;
-    utterance.rate = parseFloat(rate.value);
-    utterance.pitch = parseFloat(pitch.value);
-
-    utterance.onstart = () => {
-        showStatus('Playing audio...', 'info');
-    };
-    
-    utterance.onend = () => {
-        showStatus('Playback finished.', 'success');
-        setTimeout(() => hideStatus(), 2000);
-    };
-
-    utterance.onerror = (event) => {
-        console.error('SpeechSynthesisUtterance.onerror', event);
-        showStatus('An error occurred during speech synthesis.', 'error');
-    };
-
-    synth.speak(utterance);
-}
-
-// Function to show a status message to the user
-function showStatus(message, type = 'info') {
-    status.textContent = message;
-    status.classList.remove('hidden');
-    
-    // Optional: Add color classes based on message type
-    status.classList.remove('text-gray-400', 'text-red-400', 'text-green-400');
-    if (type === 'error') {
-        status.classList.add('text-red-400');
-    } else if (type === 'success') {
-        status.classList.add('text-green-400');
-    } else {
-        status.classList.add('text-gray-400');
-    }
-}
-
-// Function to hide the status message
-function hideStatus() {
-    status.classList.add('hidden');
-}
-
-// Dummy download function to explain the limitation
-function downloadSpeech() {
-    showStatus('⚠️ Note: Direct MP3 download is not supported by the browser\'s API. This feature requires a server-side service (e.g., Google Cloud TTS or Amazon Polly).', 'error');
-}
-
-// Event listeners
-if (synth) {
-    // Populate voices when they change (e.g., after the page loads)
-    synth.onvoiceschanged = populateVoices;
-
-    // Call populateVoices immediately if voices are already loaded
-    if (synth.getVoices().length > 0) {
-        populateVoices();
-    }
-} else {
-    showStatus('Your browser does not support the Web Speech API.', 'error');
-    playBtn.disabled = true;
-    downloadBtn.disabled = true;
-}
-
-languageFilter.addEventListener('change', filterVoices);
-playBtn.addEventListener('click', speak);
-downloadBtn.addEventListener('click', downloadSpeech);
-
-// Initial setup
-createStars();
+        // Initial setup
+        createStars();
     </script>
 </body>
 </html>
